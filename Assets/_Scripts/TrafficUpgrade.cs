@@ -18,6 +18,9 @@ public class TrafficUpgrade : MonoBehaviour
     private int currentCost;
     private int upgradeLevel;
 
+    public int UpgradeLevel => upgradeLevel;
+    public int CurrentCost => currentCost;
+
     private void Awake()
     {
         currentCost = startingCost;
@@ -68,10 +71,20 @@ public class TrafficUpgrade : MonoBehaviour
         );
 
         RefreshUI();
+
+        SaveManager.Instance?.SaveGame();
     }
 
     private void HandleMoneyChanged(int newAmount)
     {
+        RefreshUI();
+    }
+
+    public void LoadState(int savedLevel, int savedCost)
+    {
+        upgradeLevel = Mathf.Max(0, savedLevel);
+        currentCost = Mathf.Max(1, savedCost);
+
         RefreshUI();
     }
 
@@ -94,16 +107,22 @@ public class TrafficUpgrade : MonoBehaviour
             else
             {
                 float nextInterval = Mathf.Max(
-                    carSpawner.MinimumSpawnInterval,
-                    carSpawner.SpawnInterval -
-                    spawnIntervalReduction
-                );
+     carSpawner.MinimumSpawnInterval,
+     carSpawner.SpawnInterval -
+     spawnIntervalReduction
+ );
+
+                float currentCarsPerSecond =
+                    1f / carSpawner.SpawnInterval;
+
+                float nextCarsPerSecond =
+                    1f / nextInterval;
 
                 upgradeText.text =
-                    $"More Traffic\n" +
-                    $"${currentCost}\n" +
-                    $"{carSpawner.SpawnInterval:0.00}s → " +
-                    $"{nextInterval:0.00}s";
+                    $"More Cars\n" +
+                    $"$ {currentCost}\n" +
+                    $"{currentCarsPerSecond:0.00} → " +
+                    $"{nextCarsPerSecond:0.00} cars/sec";
             }
         }
 

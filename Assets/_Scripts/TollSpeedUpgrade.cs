@@ -18,6 +18,9 @@ public class TollSpeedUpgrade : MonoBehaviour
     private int currentCost;
     private int upgradeLevel;
 
+    public int UpgradeLevel => upgradeLevel;
+    public int CurrentCost => currentCost;
+
     private void Awake()
     {
         currentCost = startingCost;
@@ -67,6 +70,8 @@ public class TollSpeedUpgrade : MonoBehaviour
         );
 
         RefreshUI();
+
+        SaveManager.Instance?.SaveGame();
     }
 
     private void HandleMoneyChanged(int newAmount)
@@ -104,5 +109,13 @@ public class TollSpeedUpgrade : MonoBehaviour
                 !maxed &&
                 moneyManager.CurrentMoney >= currentCost;
         }
+    }
+
+    public void LoadState(int savedLevel, int savedCost)
+    {
+        upgradeLevel = Mathf.Max(0, savedLevel);
+        currentCost = Mathf.Max(1, savedCost);
+
+        RefreshUI();
     }
 }

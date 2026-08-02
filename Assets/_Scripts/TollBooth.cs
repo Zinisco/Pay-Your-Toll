@@ -93,6 +93,20 @@ public class TollBooth : MonoBehaviour
         processingRoutine = null;
     }
 
+    public void SetProcessingTime(float value)
+    {
+        processingTime = Mathf.Clamp(
+            value,
+            minimumProcessingTime,
+            float.MaxValue
+        );
+    }
+
+    public void SetMoneyPerCar(int value)
+    {
+        moneyPerCar = Mathf.Max(1, value);
+    }
+
     private void RefreshQueuePositions()
     {
         if (boothStopPoint == null)

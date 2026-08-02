@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5171482778482524541}
   - component: {fileID: 7768423640551616838}
   - component: {fileID: 5392957467633967927}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4512116797365437818}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: VisualRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
