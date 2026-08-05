@@ -9,6 +9,7 @@ public class SaveData
     public float processingTime;
     public int moneyPerCar;
     public float spawnInterval;
+    public bool automationUnlocked;
 
     public int speedUpgradeLevel;
     public int speedUpgradeCost;
@@ -19,5 +20,7 @@ public class SaveData
     public int trafficUpgradeLevel;
     public int trafficUpgradeCost;
 
-    public bool automationUnlocked;
+    public int laneCount;
+    public int purchasedLanes;
+    public int laneUpgradeCost;
 }

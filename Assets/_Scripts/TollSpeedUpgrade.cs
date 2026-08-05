@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class TollSpeedUpgrade : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private TollBooth tollBooth;
+    [SerializeField] private TrafficManager trafficManager;
     [SerializeField] private MoneyManager moneyManager;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
@@ -14,6 +14,7 @@ public class TollSpeedUpgrade : MonoBehaviour
     [SerializeField] private int startingCost = 5;
     [SerializeField] private float costMultiplier = 1.75f;
     [SerializeField] private float processingTimeReduction = 0.25f;
+    [SerializeField] private float minimumProcessingTime = 0.5f;
 
     private int currentCost;
     private int upgradeLevel;
@@ -48,20 +49,26 @@ public class TollSpeedUpgrade : MonoBehaviour
 
     private void BuyUpgrade()
     {
-        if (tollBooth == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
-        if (tollBooth.ProcessingTime <= tollBooth.MinimumProcessingTime)
+        if (trafficManager.ProcessingTime <= minimumProcessingTime)
             return;
 
         if (!moneyManager.TrySpendMoney(currentCost))
             return;
 
         bool upgraded =
-            tollBooth.ReduceProcessingTime(processingTimeReduction);
+            trafficManager.ReduceProcessingTimeForAllLanes(
+                processingTimeReduction,
+                minimumProcessingTime
+            );
 
         if (!upgraded)
+        {
+            moneyManager.AddMoney(currentCost);
             return;
+        }
 
         upgradeLevel++;
 
@@ -79,27 +86,42 @@ public class TollSpeedUpgrade : MonoBehaviour
         RefreshUI();
     }
 
+    public void LoadState(int savedLevel, int savedCost)
+    {
+        upgradeLevel = Mathf.Max(0, savedLevel);
+        currentCost = Mathf.Max(1, savedCost);
+
+        RefreshUI();
+    }
+
     private void RefreshUI()
     {
-        if (tollBooth == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
         bool maxed =
-            tollBooth.ProcessingTime <= tollBooth.MinimumProcessingTime;
+            trafficManager.ProcessingTime <= minimumProcessingTime;
 
         if (upgradeText != null)
         {
             if (maxed)
             {
                 upgradeText.text =
-                    $"Faster Toll Booth\nMAX LEVEL";
+                    "Faster Toll Booth\nMAX LEVEL";
             }
             else
             {
+                float nextTime = Mathf.Max(
+                    minimumProcessingTime,
+                    trafficManager.ProcessingTime -
+                    processingTimeReduction
+                );
+
                 upgradeText.text =
                     $"Faster Toll Booth\n" +
-                    $"${currentCost}\n" +
-                    $"{tollBooth.ProcessingTime:0.00}s";
+                    $"$ {currentCost}\n" +
+                    $"{trafficManager.ProcessingTime:0.00}s → " +
+                    $"{nextTime:0.00}s";
             }
         }
 
@@ -109,13 +131,5 @@ public class TollSpeedUpgrade : MonoBehaviour
                 !maxed &&
                 moneyManager.CurrentMoney >= currentCost;
         }
-    }
-
-    public void LoadState(int savedLevel, int savedCost)
-    {
-        upgradeLevel = Mathf.Max(0, savedLevel);
-        currentCost = Mathf.Max(1, savedCost);
-
-        RefreshUI();
     }
 }

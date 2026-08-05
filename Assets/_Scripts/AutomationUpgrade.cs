@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class AutomationUpgrade : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private CarSpawner carSpawner;
+    [SerializeField] private TrafficManager trafficManager;
     [SerializeField] private MoneyManager moneyManager;
     [SerializeField] private Button purchaseButton;
     [SerializeField] private TMP_Text purchaseText;
@@ -43,16 +43,16 @@ public class AutomationUpgrade : MonoBehaviour
 
     private void BuyAutomation()
     {
-        if (carSpawner == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
-        if (carSpawner.AutomationUnlocked)
+        if (trafficManager.AutomationUnlocked)
             return;
 
         if (!moneyManager.TrySpendMoney(automationCost))
             return;
 
-        carSpawner.UnlockAutomation();
+        trafficManager.UnlockAutomation();
 
         RefreshTrafficUpgradeVisibility();
         RefreshUI();
@@ -70,18 +70,18 @@ public class AutomationUpgrade : MonoBehaviour
         if (trafficUpgradeObject != null)
         {
             trafficUpgradeObject.SetActive(
-                carSpawner != null &&
-                carSpawner.AutomationUnlocked
+                trafficManager != null &&
+                trafficManager.AutomationUnlocked
             );
         }
     }
 
     private void RefreshUI()
     {
-        if (carSpawner == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
-        bool unlocked = carSpawner.AutomationUnlocked;
+        bool unlocked = trafficManager.AutomationUnlocked;
 
         if (purchaseText != null)
         {

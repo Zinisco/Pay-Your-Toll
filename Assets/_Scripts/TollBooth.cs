@@ -30,6 +30,11 @@ public class TollBooth : MonoBehaviour
 
     public int MoneyPerCar => moneyPerCar;
 
+    public void Initialize(MoneyManager sharedMoneyManager)
+    {
+        moneyManager = sharedMoneyManager;
+    }
+
     public void JoinQueue(CarController car)
     {
         if (car == null || queuedCars.Contains(car))
@@ -72,20 +77,50 @@ public class TollBooth : MonoBehaviour
                 continue;
             }
 
-            while (!frontCar.HasReachedTarget)
+            while (frontCar != null && !frontCar.HasReachedTarget)
                 yield return null;
+
+            if (frontCar == null)
+            {
+                queuedCars.RemoveAt(0);
+                RefreshQueuePositions();
+                continue;
+            }
 
             yield return new WaitForSeconds(processingTime);
 
             MoneyPopupManager.Instance?.ShowPopup(
-    frontCar.transform.position + Vector3.up * 2f,
-    moneyPerCar);
+                frontCar.transform.position + Vector3.up * 2f,
+                moneyPerCar
+            );
 
-            moneyManager.AddMoney(moneyPerCar);
+            if (moneyManager != null)
+            {
+                moneyManager.AddMoney(moneyPerCar);
+            }
+            else
+            {
+                Debug.LogError(
+                    "TollBooth has no MoneyManager assigned.",
+                    this
+                );
+            }
 
             queuedCars.RemoveAt(0);
 
-            frontCar.Leave(exitPoint.position);
+            if (exitPoint != null)
+            {
+                frontCar.Leave(exitPoint.position);
+            }
+            else
+            {
+                Debug.LogError(
+                    "TollBooth has no Exit Point assigned.",
+                    this
+                );
+
+                Destroy(frontCar.gameObject);
+            }
 
             RefreshQueuePositions();
         }

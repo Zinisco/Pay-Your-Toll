@@ -21,19 +21,10 @@ public class CarSpawner : MonoBehaviour
 
     [SerializeField] private float spawnCheckInterval = 0.05f;
 
-    [Header("Automation")]
-    [SerializeField] private bool automationUnlocked;
-    [SerializeField] private float spawnInterval = 4f;
-    [SerializeField] private float minimumSpawnInterval = 0.75f;
-
     private Coroutine automationRoutine;
     private Coroutine pendingSpawnRoutine;
 
     private int pendingSpawnRequests;
-
-    public float SpawnInterval => spawnInterval;
-    public float MinimumSpawnInterval => minimumSpawnInterval;
-    public bool AutomationUnlocked => automationUnlocked;
 
     public int PendingSpawnRequests => pendingSpawnRequests;
 
@@ -44,47 +35,9 @@ public class CarSpawner : MonoBehaviour
 
     public int MaximumTotalCars => maximumTotalCars;
 
-    public float CarsPerSecond
-    {
-        get
-        {
-            if (!automationUnlocked || spawnInterval <= 0f)
-                return 0f;
-
-            return 1f / spawnInterval;
-        }
-    }
-
-    public float MaximumCarsPerSecond
-    {
-        get
-        {
-            if (minimumSpawnInterval <= 0f)
-                return 0f;
-
-            return 1f / minimumSpawnInterval;
-        }
-    }
-
-    private void Start()
-    {
-        if (automationUnlocked)
-            StartAutomation();
-    }
-
     public bool TrySpawnCar()
     {
-        if (carPrefab == null ||
-            spawnPoint == null ||
-            tollBooth == null)
-        {
-            return false;
-        }
-
-        int totalRequestedCars =
-            tollBooth.QueueCount + pendingSpawnRequests;
-
-        if (totalRequestedCars >= maximumTotalCars)
+        if (!CanAcceptCar)
             return false;
 
         pendingSpawnRequests++;
@@ -143,34 +96,6 @@ public class CarSpawner : MonoBehaviour
         tollBooth.JoinQueue(newCar);
     }
 
-    public void UnlockAutomation()
-    {
-        if (automationUnlocked)
-            return;
-
-        automationUnlocked = true;
-        StartAutomation();
-    }
-
-    public void SetAutomationUnlocked(bool unlocked)
-    {
-        automationUnlocked = unlocked;
-
-        if (automationUnlocked)
-            StartAutomation();
-        else
-            StopAutomation();
-    }
-
-    public void StartAutomation()
-    {
-        if (!automationUnlocked || automationRoutine != null)
-            return;
-
-        automationRoutine =
-            StartCoroutine(SpawnCarsAutomatically());
-    }
-
     public void StopAutomation()
     {
         if (automationRoutine == null)
@@ -180,41 +105,19 @@ public class CarSpawner : MonoBehaviour
         automationRoutine = null;
     }
 
-    private IEnumerator SpawnCarsAutomatically()
+    public bool CanAcceptCar
     {
-        while (automationUnlocked)
+        get
         {
-            TrySpawnCar();
+            if (carPrefab == null ||
+                spawnPoint == null ||
+                tollBooth == null)
+            {
+                return false;
+            }
 
-            yield return new WaitForSeconds(spawnInterval);
+            return TotalRequestedCars < maximumTotalCars;
         }
-
-        automationRoutine = null;
-    }
-
-    public bool ReduceSpawnInterval(float amount)
-    {
-        if (amount <= 0f)
-            return false;
-
-        if (spawnInterval <= minimumSpawnInterval)
-            return false;
-
-        spawnInterval = Mathf.Max(
-            minimumSpawnInterval,
-            spawnInterval - amount
-        );
-
-        return true;
-    }
-
-    public void SetSpawnInterval(float value)
-    {
-        spawnInterval = Mathf.Clamp(
-            value,
-            minimumSpawnInterval,
-            float.MaxValue
-        );
     }
 
     private void OnDrawGizmosSelected()

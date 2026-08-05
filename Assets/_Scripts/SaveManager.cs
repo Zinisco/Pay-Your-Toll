@@ -8,13 +8,13 @@ public class SaveManager : MonoBehaviour
 
     [Header("Game Systems")]
     [SerializeField] private MoneyManager moneyManager;
-    [SerializeField] private TollBooth tollBooth;
-    [SerializeField] private CarSpawner carSpawner;
+    [SerializeField] private TrafficManager trafficManager;
 
     [Header("Upgrades")]
     [SerializeField] private TollSpeedUpgrade speedUpgrade;
     [SerializeField] private TollIncomeUpgrade incomeUpgrade;
     [SerializeField] private TrafficUpgrade trafficUpgrade;
+    [SerializeField] private LaneUpgrade laneUpgrade;
 
     [Header("UI")]
     [SerializeField] private IncomePerSecondUI incomePerSecondUI;
@@ -48,39 +48,66 @@ public class SaveManager : MonoBehaviour
         LoadGame();
 
         if (autosaveEnabled)
-            autosaveRoutine = StartCoroutine(AutosaveRoutine());
+        {
+            autosaveRoutine =
+                StartCoroutine(AutosaveRoutine());
+        }
     }
 
     public void SaveGame()
     {
-        if (saveDeleted)
-            return;
-
-        if (!ReferencesAreValid())
+        if (saveDeleted || !ReferencesAreValid())
             return;
 
         SaveData saveData = new SaveData
         {
             money = moneyManager.CurrentMoney,
-            incomePerSecond = incomePerSecondUI.CurrentIncomePerSecond,
 
-            processingTime = tollBooth.ProcessingTime,
-            moneyPerCar = tollBooth.MoneyPerCar,
-            spawnInterval = carSpawner.SpawnInterval,
+            incomePerSecond =
+                incomePerSecondUI.CurrentIncomePerSecond,
 
-            speedUpgradeLevel = speedUpgrade.UpgradeLevel,
-            speedUpgradeCost = speedUpgrade.CurrentCost,
+            processingTime =
+                trafficManager.ProcessingTime,
 
-            incomeUpgradeLevel = incomeUpgrade.UpgradeLevel,
-            incomeUpgradeCost = incomeUpgrade.CurrentCost,
+            moneyPerCar =
+                trafficManager.MoneyPerCar,
 
-            trafficUpgradeLevel = trafficUpgrade.UpgradeLevel,
-            trafficUpgradeCost = trafficUpgrade.CurrentCost,
+            spawnInterval =
+                trafficManager.SpawnInterval,
 
-            automationUnlocked = carSpawner.AutomationUnlocked,
+            automationUnlocked =
+                trafficManager.AutomationUnlocked,
+
+            speedUpgradeLevel =
+                speedUpgrade.UpgradeLevel,
+
+            speedUpgradeCost =
+                speedUpgrade.CurrentCost,
+
+            incomeUpgradeLevel =
+                incomeUpgrade.UpgradeLevel,
+
+            incomeUpgradeCost =
+                incomeUpgrade.CurrentCost,
+
+            trafficUpgradeLevel =
+                trafficUpgrade.UpgradeLevel,
+
+            trafficUpgradeCost =
+                trafficUpgrade.CurrentCost,
+
+            laneCount =
+                trafficManager.LaneCount,
+
+            purchasedLanes =
+                laneUpgrade.PurchasedLanes,
+
+            laneUpgradeCost =
+                laneUpgrade.CurrentCost
         };
 
-        string json = JsonUtility.ToJson(saveData, true);
+        string json =
+            JsonUtility.ToJson(saveData, true);
 
         try
         {
@@ -102,27 +129,50 @@ public class SaveManager : MonoBehaviour
 
         if (!File.Exists(savePath))
         {
-            Debug.Log("No save file found. Starting a new game.");
+            Debug.Log(
+                "No save file found. Starting a new game."
+            );
+
             return;
         }
 
         try
         {
-            string json = File.ReadAllText(savePath);
-            SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            string json =
+                File.ReadAllText(savePath);
+
+            SaveData saveData =
+                JsonUtility.FromJson<SaveData>(json);
 
             if (saveData == null)
             {
-                Debug.LogWarning("Save file could not be read.");
+                Debug.LogWarning(
+                    "Save file could not be read."
+                );
+
                 return;
             }
 
             moneyManager.SetMoney(saveData.money);
 
-            tollBooth.SetProcessingTime(saveData.processingTime);
-            tollBooth.SetMoneyPerCar(saveData.moneyPerCar);
+            trafficManager.SetProcessingTimeForAllLanes(
+                saveData.processingTime
+            );
 
-            carSpawner.SetSpawnInterval(saveData.spawnInterval);
+            trafficManager.SetMoneyPerCarForAllLanes(
+                saveData.moneyPerCar
+            );
+
+            trafficManager.SetSpawnInterval(
+                saveData.spawnInterval
+            );
+
+            int savedLaneCount =
+                Mathf.Max(1, saveData.laneCount);
+
+            trafficManager.BuildLanesUntilCount(
+                savedLaneCount
+            );
 
             speedUpgrade.LoadState(
                 saveData.speedUpgradeLevel,
@@ -139,15 +189,18 @@ public class SaveManager : MonoBehaviour
                 saveData.trafficUpgradeCost
             );
 
-            moneyManager.SetMoney(saveData.money);
+            laneUpgrade.LoadState(
+                saveData.purchasedLanes,
+                saveData.laneUpgradeCost
+            );
 
             incomePerSecondUI.LoadIncomePerSecond(
                 saveData.incomePerSecond
             );
 
-            carSpawner.SetAutomationUnlocked(
-    saveData.automationUnlocked
-);
+            trafficManager.SetAutomationUnlocked(
+                saveData.automationUnlocked
+            );
 
             Debug.Log("Game loaded.");
         }
@@ -168,8 +221,10 @@ public class SaveManager : MonoBehaviour
                 File.Delete(savePath);
 
             saveDeleted = true;
+
             moneyManager.ResetMoney();
             incomePerSecondUI.ResetIncomePerSecond();
+            trafficManager.SetAutomationUnlocked(false);
 
             Debug.Log("Save deleted.");
         }
@@ -198,12 +253,12 @@ public class SaveManager : MonoBehaviour
     {
         return
             moneyManager != null &&
-            tollBooth != null &&
-            carSpawner != null &&
+            trafficManager != null &&
             incomePerSecondUI != null &&
             speedUpgrade != null &&
             incomeUpgrade != null &&
-            trafficUpgrade != null;
+            trafficUpgrade != null &&
+            laneUpgrade != null;
     }
 
     private void OnApplicationPause(bool paused)

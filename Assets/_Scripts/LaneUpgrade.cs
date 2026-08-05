@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TollIncomeUpgrade : MonoBehaviour
+public class LaneUpgrade : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private TrafficManager trafficManager;
@@ -10,15 +10,14 @@ public class TollIncomeUpgrade : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
 
-    [Header("Upgrade")]
-    [SerializeField] private int startingCost = 10;
-    [SerializeField] private float costMultiplier = 1.8f;
-    [SerializeField] private int incomeIncrease = 1;
+    [Header("Cost")]
+    [SerializeField] private int startingCost = 100;
+    [SerializeField] private float costMultiplier = 2.5f;
 
     private int currentCost;
-    private int upgradeLevel;
+    private int purchasedLanes;
 
-    public int UpgradeLevel => upgradeLevel;
+    public int PurchasedLanes => purchasedLanes;
     public int CurrentCost => currentCost;
 
     private void Awake()
@@ -29,7 +28,7 @@ public class TollIncomeUpgrade : MonoBehaviour
     private void OnEnable()
     {
         if (upgradeButton != null)
-            upgradeButton.onClick.AddListener(BuyUpgrade);
+            upgradeButton.onClick.AddListener(BuyLane);
 
         if (moneyManager != null)
             moneyManager.MoneyChanged += HandleMoneyChanged;
@@ -40,25 +39,33 @@ public class TollIncomeUpgrade : MonoBehaviour
     private void OnDisable()
     {
         if (upgradeButton != null)
-            upgradeButton.onClick.RemoveListener(BuyUpgrade);
+            upgradeButton.onClick.RemoveListener(BuyLane);
 
         if (moneyManager != null)
             moneyManager.MoneyChanged -= HandleMoneyChanged;
     }
 
-    private void BuyUpgrade()
+    private void BuyLane()
     {
         if (trafficManager == null || moneyManager == null)
             return;
 
+        if (trafficManager.LaneCount >=
+            trafficManager.MaximumLaneCount)
+        {
+            return;
+        }
+
         if (!moneyManager.TrySpendMoney(currentCost))
             return;
 
-        trafficManager.IncreaseMoneyPerCarForAllLanes(
-            incomeIncrease
-        );
+        if (!trafficManager.BuildNextLane())
+        {
+            moneyManager.AddMoney(currentCost);
+            return;
+        }
 
-        upgradeLevel++;
+        purchasedLanes++;
 
         currentCost = Mathf.CeilToInt(
             currentCost * costMultiplier
@@ -69,15 +76,32 @@ public class TollIncomeUpgrade : MonoBehaviour
         SaveManager.Instance?.SaveGame();
     }
 
-    private void HandleMoneyChanged(int newAmount)
+    private void HandleMoneyChanged(int currentMoney)
     {
         RefreshUI();
     }
 
-    public void LoadState(int savedLevel, int savedCost)
+    public void LoadState(
+     int savedPurchasedLanes,
+     int savedCost
+ )
     {
-        upgradeLevel = Mathf.Max(0, savedLevel);
-        currentCost = Mathf.Max(1, savedCost);
+        int maximumPurchasableLanes =
+            Mathf.Max(
+                0,
+                trafficManager.MaximumLaneCount - 1
+            );
+
+        purchasedLanes = Mathf.Clamp(
+            savedPurchasedLanes,
+            0,
+            maximumPurchasableLanes
+        );
+
+        currentCost = Mathf.Max(
+            1,
+            savedCost
+        );
 
         RefreshUI();
     }
@@ -87,18 +111,21 @@ public class TollIncomeUpgrade : MonoBehaviour
         if (trafficManager == null || moneyManager == null)
             return;
 
+        bool maxed =
+            trafficManager.LaneCount >=
+            trafficManager.MaximumLaneCount;
+
         if (upgradeText != null)
         {
-            upgradeText.text =
-                $"Increase Toll\n" +
-                $"$ {currentCost}\n" +
-                $"$ {trafficManager.MoneyPerCar} → " +
-                $"$ {trafficManager.MoneyPerCar + incomeIncrease}";
+            upgradeText.text = maxed
+                ? "Build Lane\nMAX"
+                : $"Build Lane\n$ {currentCost}";
         }
 
         if (upgradeButton != null)
         {
             upgradeButton.interactable =
+                !maxed &&
                 moneyManager.CurrentMoney >= currentCost;
         }
     }

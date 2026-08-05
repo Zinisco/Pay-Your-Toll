@@ -6,7 +6,6 @@ public class RoadClickSpawner : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera gameplayCamera;
-    [SerializeField] private CarSpawner carSpawner;
 
     [Header("Road Detection")]
     [SerializeField] private LayerMask roadLayerMask;
@@ -33,12 +32,14 @@ public class RoadClickSpawner : MonoBehaviour
 
     private void TryClickRoad()
     {
-        if (gameplayCamera == null || carSpawner == null)
+        if (gameplayCamera == null)
             return;
 
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        Vector2 mousePosition =
+            Mouse.current.position.ReadValue();
 
-        Ray ray = gameplayCamera.ScreenPointToRay(mousePosition);
+        Ray ray =
+            gameplayCamera.ScreenPointToRay(mousePosition);
 
         if (!Physics.Raycast(
                 ray,
@@ -49,7 +50,10 @@ public class RoadClickSpawner : MonoBehaviour
             return;
         }
 
-        carSpawner.TrySpawnCar();
+        RoadLane clickedLane =
+            hit.collider.GetComponentInParent<RoadLane>();
+
+        clickedLane?.TrySpawnCar();
     }
 
     private bool PointerIsOverUI()

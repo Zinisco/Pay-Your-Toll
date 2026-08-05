@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class TrafficUpgrade : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private CarSpawner carSpawner;
+    [SerializeField] private TrafficManager trafficManager;
     [SerializeField] private MoneyManager moneyManager;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
@@ -48,16 +48,16 @@ public class TrafficUpgrade : MonoBehaviour
 
     private void BuyUpgrade()
     {
-        if (carSpawner == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
-        if (carSpawner.SpawnInterval <= carSpawner.MinimumSpawnInterval)
+        if (trafficManager.SpawnInterval <= trafficManager.MinimumSpawnInterval)
             return;
 
         if (!moneyManager.TrySpendMoney(currentCost))
             return;
 
-        bool upgraded = carSpawner.ReduceSpawnInterval(
+        bool upgraded = trafficManager.ReduceSpawnInterval(
             spawnIntervalReduction
         );
 
@@ -90,12 +90,12 @@ public class TrafficUpgrade : MonoBehaviour
 
     private void RefreshUI()
     {
-        if (carSpawner == null || moneyManager == null)
+        if (trafficManager == null || moneyManager == null)
             return;
 
         bool maxed =
-            carSpawner.SpawnInterval <=
-            carSpawner.MinimumSpawnInterval;
+            trafficManager.SpawnInterval <=
+            trafficManager.MinimumSpawnInterval;
 
         if (upgradeText != null)
         {
@@ -107,13 +107,13 @@ public class TrafficUpgrade : MonoBehaviour
             else
             {
                 float nextInterval = Mathf.Max(
-     carSpawner.MinimumSpawnInterval,
-     carSpawner.SpawnInterval -
+     trafficManager.MinimumSpawnInterval,
+     trafficManager.SpawnInterval -
      spawnIntervalReduction
  );
 
                 float currentCarsPerSecond =
-                    1f / carSpawner.SpawnInterval;
+                    1f / trafficManager.SpawnInterval;
 
                 float nextCarsPerSecond =
                     1f / nextInterval;
