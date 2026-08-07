@@ -11,7 +11,8 @@ public class TrafficManager : MonoBehaviour
     [SerializeField] private RoadLane startingLane;
 
     [Header("Additional Lanes")]
-    [SerializeField] private RoadLane roadLanePrefab;
+    [SerializeField] private RoadLane northboundLanePrefab;
+    [SerializeField] private RoadLane southboundLanePrefab;
     [SerializeField] private float laneXOffset = 4f;
     [SerializeField] private int maximumLaneCount = 4;
 
@@ -74,20 +75,21 @@ public class TrafficManager : MonoBehaviour
 
     public bool BuildNextLane()
     {
-        if (roadLanePrefab == null)
+        if (startingLane == null)
         {
             Debug.LogError(
-                "TrafficManager has no Road Lane Prefab assigned.",
+                "TrafficManager has no Starting Lane assigned.",
                 this
             );
 
             return false;
         }
 
-        if (startingLane == null)
+        if (northboundLanePrefab == null ||
+            southboundLanePrefab == null)
         {
             Debug.LogError(
-                "TrafficManager has no Starting Lane assigned.",
+                "TrafficManager requires both lane prefabs.",
                 this
             );
 
@@ -99,14 +101,41 @@ public class TrafficManager : MonoBehaviour
 
         int newLaneIndex = lanes.Count;
 
+        bool shouldBeNorthbound =
+            newLaneIndex % 2 == 0;
+
+        RoadLane selectedPrefab =
+            shouldBeNorthbound
+                ? northboundLanePrefab
+                : southboundLanePrefab;
+
+        int directionLaneNumber;
+
+        if (shouldBeNorthbound)
+        {
+            // Lane indices 2, 4, 6 become offsets 1, 2, 3.
+            directionLaneNumber = newLaneIndex / 2;
+        }
+        else
+        {
+            // Lane indices 1, 3, 5 become offsets 1, 2, 3.
+            directionLaneNumber = (newLaneIndex + 1) / 2;
+        }
+
+        float xDirection =
+            shouldBeNorthbound ? 1f : -1f;
+
         Vector3 spawnPosition =
             startingLane.transform.position +
-            Vector3.right * laneXOffset * newLaneIndex;
+            Vector3.right *
+            laneXOffset *
+            directionLaneNumber *
+            xDirection;
 
         RoadLane newLane = Instantiate(
-            roadLanePrefab,
+            selectedPrefab,
             spawnPosition,
-            startingLane.transform.rotation,
+            selectedPrefab.transform.rotation,
             startingLane.transform.parent
         );
 

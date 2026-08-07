@@ -1257,9 +1257,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TrafficManager
   moneyManager: {fileID: 1889504045}
   startingLane: {fileID: 307396027902192834}
-  roadLanePrefab: {fileID: 2108030925197492203, guid: 23a75ed0c2bcee74aae4c3875cec35f4, type: 3}
+  northboundLanePrefab: {fileID: 2108030925197492203, guid: 23a75ed0c2bcee74aae4c3875cec35f4, type: 3}
+  southboundLanePrefab: {fileID: 2108030925197492203, guid: dbc6b07ec965fc24899a4aed6a005be5, type: 3}
   laneXOffset: 4
-  maximumLaneCount: 4
+  maximumLaneCount: 8
   automationUnlocked: 0
   spawnInterval: 3
   minimumSpawnInterval: 0.25
